@@ -129,6 +129,20 @@ const AuthPage: React.FC = () => {
    const [errors, setErrors] = useState<Record<string, string>>({});
    const [showTwoFactor, setShowTwoFactor] = useState(false);
 
+   // Define all event handlers
+   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      setName(e.target.value);
+   };
+
+   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      setEmail(e.target.value);
+   };
+
+   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      setPassword(e.target.value);
+   };
+
+   // Validation function
    const validateForm = () => {
       const newErrors: Record<string, string> = {};
 
@@ -150,6 +164,12 @@ const AuthPage: React.FC = () => {
          newErrors.name = "Name is required";
       }
 
+      return newErrors;
+   };
+
+   // Only validate on submit, not on every keystroke
+   const handleValidateOnSubmit = () => {
+      const newErrors = validateForm();
       setErrors(newErrors);
       return Object.keys(newErrors).length === 0;
    };
@@ -157,7 +177,7 @@ const AuthPage: React.FC = () => {
    const handleSubmit = (e: React.FormEvent) => {
       e.preventDefault();
 
-      if (validateForm()) {
+      if (handleValidateOnSubmit()) {
          // For login and signup, show 2FA
          if (mode === "login" || mode === "signup") {
             setShowTwoFactor(true);
@@ -182,14 +202,19 @@ const AuthPage: React.FC = () => {
       setShowTwoFactor(false);
    };
 
-   const renderFloatingNumbers = () => {
-      const numbers = [];
-      for (let i = 0; i < 20; i++) {
+   // Create floating elements for the background
+   const renderFloatingElements = () => {
+      // Significantly reduce the number of animated elements
+      const elements = [];
+      const colors = ["red", "blue", "green"];
+
+      // Only render 5 numbers instead of 20
+      for (let i = 0; i < 5; i++) {
          const x = Math.random() * 100;
          const y = Math.random() * 100;
          const number = Math.floor(Math.random() * 100);
 
-         numbers.push(
+         elements.push(
             <FloatingNumber
                key={`num-${i}`}
                initial={{ x: `${x}%`, y: `${y}%`, opacity: 0 }}
@@ -199,27 +224,21 @@ const AuthPage: React.FC = () => {
                }}
                transition={{
                   repeat: Infinity,
-                  duration: Math.random() * 5 + 5,
-                  delay: Math.random() * 5,
+                  duration: 10, // Fixed duration instead of random
+                  delay: i * 2, // Staggered delay
                }}>
                {number.toString().padStart(2, "0")}
             </FloatingNumber>,
          );
       }
-      return numbers;
-   };
 
-   const renderPokerChips = () => {
-      const chips = [];
-      const colors = ["red", "blue", "green"];
-
-      for (let i = 0; i < 15; i++) {
+      // Only render 5 chips instead of 15
+      for (let i = 0; i < 5; i++) {
          const x = Math.random() * 100;
          const y = Math.random() * 100;
-         const color = colors[Math.floor(Math.random() * colors.length)];
-         const rotationSpeed = Math.random() * 10 + 5; // Between 5-15 seconds per rotation
+         const color = colors[i % colors.length]; // Deterministic color
 
-         chips.push(
+         elements.push(
             <PokerChip
                key={`chip-${i}`}
                chipColor={color}
@@ -236,7 +255,7 @@ const AuthPage: React.FC = () => {
                transition={{
                   rotate: {
                      repeat: Infinity,
-                     duration: rotationSpeed,
+                     duration: 15, // Fixed longer duration
                      ease: "linear",
                   },
                   opacity: {
@@ -246,15 +265,12 @@ const AuthPage: React.FC = () => {
             />,
          );
       }
-      return chips;
+      return elements;
    };
 
    return (
       <AuthContainer>
-         <AnimatedBackground>
-            {renderFloatingNumbers()}
-            {renderPokerChips()}
-         </AnimatedBackground>
+         <AnimatedBackground>{renderFloatingElements()}</AnimatedBackground>
 
          <Container>
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
@@ -279,9 +295,10 @@ const AuthPage: React.FC = () => {
                                        type='text'
                                        placeholder='Enter your full name'
                                        value={name}
-                                       onChange={(e) => setName(e.target.value)}
+                                       onChange={handleNameChange}
                                        fullWidth
                                        error={!!errors.name}
+                                       autoComplete='name'
                                     />
                                     {errors.name && <ErrorMessage>{errors.name}</ErrorMessage>}
                                  </FormGroup>
@@ -294,9 +311,10 @@ const AuthPage: React.FC = () => {
                                     type='email'
                                     placeholder='Enter your email'
                                     value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
+                                    onChange={handleEmailChange}
                                     fullWidth
                                     error={!!errors.email}
+                                    autoComplete='email'
                                  />
                                  {errors.email && <ErrorMessage>{errors.email}</ErrorMessage>}
                               </FormGroup>
@@ -309,9 +327,10 @@ const AuthPage: React.FC = () => {
                                        type='password'
                                        placeholder='Enter your password'
                                        value={password}
-                                       onChange={(e) => setPassword(e.target.value)}
+                                       onChange={handlePasswordChange}
                                        fullWidth
                                        error={!!errors.password}
+                                       autoComplete={mode === "login" ? "current-password" : "new-password"}
                                     />
                                     {errors.password && <ErrorMessage>{errors.password}</ErrorMessage>}
                                  </FormGroup>
